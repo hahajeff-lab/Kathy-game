@@ -347,6 +347,11 @@ rt {
 // --- 家長鎖核心邏輯 ---
 let unlockSequence = [];
 let isAdminMode = false;
+let audioCtx = null;
+let oscillator = null;
+let gainNode = null;
+let warningTimer = null;
+
 
 function unlockStep(side) {
     // 這裡 side 會接收到 HTML 傳來的 'L' 或 'R'
@@ -411,12 +416,12 @@ let audioCtx = null; // 放在 function 外層
 
 function startBuzz() {
     try {
-        // 如果 context 不存在，就建立一個新的
+        // 如果 init 沒解鎖到，這裡做二次保險
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
-
-        // 重點：如果被懸掛(suspended)，必須透過 pointerdown 事件觸發 resume
+        
+        // 必須再次確保 state 是 running
         if (audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
@@ -435,14 +440,10 @@ function startBuzz() {
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
         oscillator.start();
-        
-        console.log("Audio Context State:", audioCtx.state); // 檢查狀態用
     } catch(e) { 
         console.log("Audio Error:", e); 
     }
 }
-
-
 function stopBuzz() {
     if (oscillator) {
         oscillator.stop();
@@ -604,36 +605,45 @@ function renderPunishTasks() {
 
     // 載入資料
 function init() {
-    // 1. 載入資料
     const saved = localStorage.getItem('taskMasterV7');
     if (saved) state = JSON.parse(saved);
+    document.getElementById('displayPoints').innerText = state.points;
     
-    // 2. 更新積分顯示
-    const displayPoints = document.getElementById('displayPoints');
-    if (displayPoints) {
-        displayPoints.innerText = state.points;
-    }
-    
-    // 3. 啟動按鈕監聽 (解決 Android 長按問題)
     setupWarningButton(); 
 
-    // 針對 iPhone 的解鎖：當使用者第一次碰螢幕，就播放一個超短的無聲訊號
-    const unlock = () => {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        audioCtx.resume();
-        // 建立一個 0.001 秒的無聲震盪器，強迫 iOS 釋放聲音權限
-        let buffer = audioCtx.createBuffer(1, 1, 22050);
-        let source = audioCtx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(audioCtx.destination);
-        source.start(0);
+    // --- 針對 iOS 桌面捷徑 (PWA) 的終極解鎖 ---
+    const unlockAudio = () => {
+        // 如果還沒建立過，就建立一個
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
         
-        window.removeEventListener('touchstart', unlock);
-        window.removeEventListener('mousedown', unlock);
+        // 關鍵：如果狀態是 suspended，強制 resume
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        // 建立一個 0.0001 秒的無聲震盪器並立即播放，這能騙過 iOS 的靜音鎖
+        const silentOsc = audioCtx.createOscillator();
+        const silentGain = audioCtx.createGain();
+        silentGain.gain.value = 0.0001; 
+        silentOsc.connect(silentGain);
+        silentGain.connect(audioCtx.destination);
+        silentOsc.start(0);
+        silentOsc.stop(0.001);
+
+        console.log("iOS Audio Context Unlocked: " + audioCtx.state);
+        
+        // 解鎖成功後，移除監聽器以節省電力
+        window.removeEventListener('touchstart', unlockAudio);
+        window.removeEventListener('click', unlockAudio);
     };
-    window.addEventListener('touchstart', unlock);
-    window.addEventListener('mousedown', unlock);
+
+    // 監聽所有可能的觸碰動作
+    window.addEventListener('touchstart', unlockAudio, { passive: false });
+    window.addEventListener('click', unlockAudio);
 }
+
 
 
     function save() {
@@ -1079,6 +1089,7 @@ function showDetail(dStr) {
 </html>
 
     
+
 
 
 
