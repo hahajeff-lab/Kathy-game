@@ -409,25 +409,31 @@ let gainNode;
 // 1. 產生低頻嗡嗡聲
 function startBuzz() {
     try {
+        // 1. 初始化 Context
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // 【關鍵修正】在播放前強制啟動 Context
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
         oscillator = audioCtx.createOscillator();
         gainNode = audioCtx.createGain();
 
-        oscillator.type = 'triangle'; // 三角波比鋸齒波更清脆
-        
-        // 設定一個不斷變化的頻率 (警報聲效果)
+        oscillator.type = 'triangle';
         oscillator.frequency.setValueAtTime(300, audioCtx.currentTime); 
         oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 1);
         oscillator.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 2);
         oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 3);
         
-        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime); // 稍微調大音量
+        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime); 
         
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
         oscillator.start();
-    } catch(e) { console.log("Audio Error"); }
+    } catch(e) { console.log("Audio Error:", e); }
 }
+
 function stopBuzz() {
     if (oscillator) {
         oscillator.stop();
@@ -558,9 +564,8 @@ function renderPunishTasks() {
                 <div class="progress-bar punish-style ${isFull ? 'complete' : ''}" 
                      style="width: ${Math.min(progress, 100)}%"></div>
             </div>
-
-            <div class="task-action-area">
-                <button class="main-btn" 
+ <div class="task-action-area">
+<button class="main-btn" 
                     style="background:${isFull ? '#ccc' : 'var(--danger)'}" 
                     onclick="doAction(${t.id})" 
                     ${isFull ? 'disabled' : ''}>
@@ -590,21 +595,30 @@ function renderPunishTasks() {
 
     // 載入資料
 function init() {
+    // 1. 載入資料
     const saved = localStorage.getItem('taskMasterV7');
     if (saved) state = JSON.parse(saved);
-    document.getElementById('displayPoints').innerText = state.points;
     
-    // 必須有這一行，上面的 setupWarningButton 才會生效！
+    // 2. 更新積分顯示
+    const displayPoints = document.getElementById('displayPoints');
+    if (displayPoints) {
+        displayPoints.innerText = state.points;
+    }
+    
+    // 3. 啟動按鈕監聽 (解決 Android 長按問題)
     setupWarningButton(); 
-    // --- 新增：解鎖 iOS 音訊限制 ---
+
+    // 4. --- 新增：解鎖 iOS Web Audio 限制 (解決 iPhone 沒聲音) ---
     const unlockAudio = () => {
-        if (buzzAudio) {
-            buzzAudio.play().then(() => {
-                buzzAudio.pause(); // 播放後立刻暫停
-                buzzAudio.currentTime = 0;
-            }).catch(e => console.log("等待解鎖中"));
+        // 建立一個臨時的 AudioContext 來解鎖
+        const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (tempCtx.state === 'suspended') {
+            tempCtx.resume().then(() => {
+                tempCtx.close(); // 解鎖後立即關閉，不佔資源
+                console.log("iOS Audio Unlocked");
+            });
         }
-        // 解鎖成功後，移除這個監聽器，避免浪費效能
+        // 只要使用者點擊或觸碰過一次，就移除監聽器
         document.removeEventListener('touchstart', unlockAudio);
         document.removeEventListener('click', unlockAudio);
     };
@@ -613,7 +627,6 @@ function init() {
     document.addEventListener('click', unlockAudio);
 }
 
-}
 
     function save() {
         localStorage.setItem('taskMasterV7', JSON.stringify(state));
@@ -1058,4 +1071,5 @@ function showDetail(dStr) {
 </html>
 
     
+
 
