@@ -172,45 +172,47 @@ rt {
     
 /* 警告按鈕：初始設定為隱藏 */
 /* 警告按鈕：修改為底部長型橫條 */
+/* 警告按鈕：長條橫跨版 */
 .warning-btn {
-    display: none;             /* 初始隱藏，僅在 Page2 顯示 */
+    display: none;             /* 預設隱藏 */
     position: fixed;
-    bottom: 105px;             /* 調整與底部的距離，確保在導覽列上方 */
-    left: 0;                   /* 靠左對齊 */
-    width: 100%;               /* 橫跨左右畫面 */
-    height: 40px;              /* 這裡調整按鈕高度 (例如 30px 或 40px) */
-    background-color: #8B0000; /* 這裡調整底色 (深暗紅色) */
+    bottom: 105px;             /* 距離底部高度，避開導覽列 */
+    left: 0;                   /* 從最左邊開始 */
+    width: 100%;               /* 橫跨左右 */
+    height: 50px;              /* 您要求的高度 50px */
+    background-color: #4A0000; /* 底色：暗紅色 */
     color: white;              /* 文字顏色 */
     border: none;
     align-items: center;
     justify-content: center;
-    font-size: 18px;           /* 文字大小 */
+    font-size: 16px;           /* 適合 30px 的字體大小 */
     font-weight: bold;
-    z-index: 1500;             /* 確保層級在最前方 */
+    z-index: 1500;
     
-    /* 防止 Android 長按跳出選單 */
+    /* 核心：防 Android 選單干擾 */
     touch-action: none !important;
     user-select: none;
     -webkit-user-select: none;
     cursor: pointer;
 }
 
-/* 只有當頁面 active 時才顯示 */
+/* 任務頁 Active 時顯示 */
 .active .warning-btn {
     display: flex;
 }
 
-/* 警告按鈕閃爍動畫設定 */
-@keyframes flash-red {
-    0% { background-color: #8B0000; }
-    50% { background-color: #FF0000; } /* 閃爍時變亮紅 */
-    100% { background-color: #8B0000; }
+/* 按下時的閃爍動畫 (暗紅與亮紅切換) */
+@keyframes flash-warning {
+    0% { background-color: #4A0000; }
+    50% { background-color: #FF0000; }
+    100% { background-color: #4A0000; }
 }
 
-/* 啟動閃爍時套用的 Class */
+/* 閃爍狀態 Class */
 .is-warning {
-    animation: flash-red 0.4s infinite; /* 這裡調整閃爍速度 (0.4s) */
+    animation: flash-warning 0.3s infinite; /* 0.3秒閃爍一次 */
 }
+
 
 
 /* 警告頁面專屬的橘色進度條 */
@@ -284,9 +286,8 @@ rt {
         <div id="activeTaskList"></div>
     </div>
 
-    <div id="warningBtn" class="warning-btn">⚠️長 按 3 秒 發 出 警 報 ⚠️</div>
+    <div id="warningBtn" class="warning-btn">🚨 長 按 3 秒 發 出 警 報 🚨</div>
 </div>
-
 
 <div id="page3" class="page">
     <div class="card">
@@ -438,46 +439,96 @@ function stopBuzz() {
 // 2. 長按邏輯
 
 // A. 啟動警告
+// A. 啟動警告：按下時觸發
+// --- 警告功能核心邏輯 ---
+
+// A. 啟動警告
 function handleWarningStart() {
-    stopEffects(); // 先清理狀態
+    stopEffects(); // 清理舊狀態
 
-    // 1. 視覺回饋：按鈕變色閃爍
     const btn = document.getElementById('warningBtn');
-    if (btn) btn.classList.add('is-warning');
+    if (btn) btn.classList.add('is-warning'); // 開始閃爍
     
-    // 2. 聽覺回饋：警報聲 (保留您原本的 startBuzz)
-    startBuzz();
+    startBuzz(); // 播放警報聲
 
-    // 3. 設定 3 秒後自動執行懲罰跳頁
+    // 啟動 3 秒計時
     warningTimer = setTimeout(() => {
         finishWarning();
     }, 3000);
 }
 
-// B. 停止所有特效 (放開按鈕時觸發)
+// B. 停止特效
+function handleWarningEnd() {
+    stopEffects();
+}
+
+// C. 清理函式
+function stopEffects() {
+    if (warningTimer) {
+        clearTimeout(warningTimer);
+        warningTimer = null;
+    }
+    const btn = document.getElementById('warningBtn');
+    if (btn) btn.classList.remove('is-warning'); // 停止閃爍
+    
+    stopBuzz(); // 停止聲音
+    if ("vibrate" in navigator) navigator.vibrate(0);
+}
+
+// D. 跳轉懲罰頁
+function finishWarning() {
+    stopEffects();
+    showPage(6); // 進入 Page 6
+}
+
+// E. 重新綁定按鈕 (這是解決 Android 沒反應的關鍵)
+function setupWarningButton() {
+    const btn = document.getElementById('warningBtn');
+    if (!btn) return;
+
+    // 徹底封鎖右鍵選單
+    btn.addEventListener('contextmenu', e => e.preventDefault());
+
+    // 按下
+    btn.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        handleWarningStart();
+    }, { passive: false });
+
+    // 放開、離開、取消
+    const endAction = (e) => {
+        e.preventDefault();
+        handleWarningEnd();
+    };
+    btn.addEventListener('pointerup', endAction);
+    btn.addEventListener('pointercancel', endAction);
+    btn.addEventListener('pointerleave', endAction);
+}
+
+
+// C. 核心清理函式：確保所有特效立刻消失
 function stopEffects() {
     if (warningTimer) {
         clearTimeout(warningTimer);
         warningTimer = null;
     }
     
-    // 移除按鈕閃爍效果
+    // 移除按鈕的閃爍狀態
     const btn = document.getElementById('warningBtn');
     if (btn) btn.classList.remove('is-warning');
     
-    // 停止聲音 (保留您原本的 stopBuzz)
+    // 停止警報音效
     stopBuzz();
     
-    // 確保手機震動停止 (保險用)
+    // 停止手機震動
     if ("vibrate" in navigator) navigator.vibrate(0);
 }
 
-// C. 完成 3 秒長按後的跳轉
+// D. 成功觸發：3 秒到，自動跳轉到懲罰頁
 function finishWarning() {
     stopEffects();
-    showPage(6); // 進入懲罰頁面
+    showPage(6); // 這裡是跳轉到您的「懲罰任務清單」頁面
 }
-
 
 function renderPunishTasks() {
     const list = document.getElementById('punishTaskList');
@@ -538,13 +589,14 @@ function renderPunishTasks() {
     };
 
     // 載入資料
-    function init() {
-        const saved = localStorage.getItem('taskMasterV7');
-        if (saved) {
-            state = JSON.parse(saved);
-        }
-        document.getElementById('displayPoints').innerText = state.points;
-    }
+function init() {
+    const saved = localStorage.getItem('taskMasterV7');
+    if (saved) state = JSON.parse(saved);
+    document.getElementById('displayPoints').innerText = state.points;
+    
+    // 必須有這一行，上面的 setupWarningButton 才會生效！
+    setupWarningButton(); 
+}
 
     function save() {
         localStorage.setItem('taskMasterV7', JSON.stringify(state));
@@ -577,7 +629,7 @@ function showPage(num, el) {
     // 4. 根據編號執行對應的渲染
     if (num === 2) renderTasks();
     if (num === 3) renderShop();
-    if (num === 4) renderInventory();
+        if (num === 4) renderInventory();
     if (num === 5) renderCalendar();
     if (num === 6) renderPunishTasks(); // 進入懲罰頁
     
@@ -787,8 +839,6 @@ function formatRuby(text, zyStr) {
     save(); // 儲存到 LocalStorage
 }
 
-
-
     // --- 商店與背包渲染 ---
 function renderShop() {
     const list = document.getElementById('shopList');
@@ -989,3 +1039,5 @@ function showDetail(dStr) {
 </script>
 </body>
 </html>
+
+    
