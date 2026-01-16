@@ -596,6 +596,23 @@ function init() {
     
     // 必須有這一行，上面的 setupWarningButton 才會生效！
     setupWarningButton(); 
+    // --- 新增：解鎖 iOS 音訊限制 ---
+    const unlockAudio = () => {
+        if (buzzAudio) {
+            buzzAudio.play().then(() => {
+                buzzAudio.pause(); // 播放後立刻暫停
+                buzzAudio.currentTime = 0;
+            }).catch(e => console.log("等待解鎖中"));
+        }
+        // 解鎖成功後，移除這個監聽器，避免浪費效能
+        document.removeEventListener('touchstart', unlockAudio);
+        document.removeEventListener('click', unlockAudio);
+    };
+
+    document.addEventListener('touchstart', unlockAudio);
+    document.addEventListener('click', unlockAudio);
+}
+
 }
 
     function save() {
@@ -1041,3 +1058,4 @@ function showDetail(dStr) {
 </html>
 
     
+
