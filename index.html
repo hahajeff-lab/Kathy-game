@@ -409,6 +409,11 @@ let gainNode;
 // 1. 產生低頻嗡嗡聲
 function startBuzz() {
     try {
+                if ("vibrate" in navigator) {
+        // --- 加入震動回饋 ---
+            // 設定一個規律的震動模式：震動 200ms，停 100ms，循環
+            navigator.vibrate([200, 100, 200, 100, 200, 100, 200]);
+        }
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         oscillator = audioCtx.createOscillator();
         gainNode = audioCtx.createGain();
@@ -464,15 +469,28 @@ function handleWarningEnd() {
 
 // C. 清理函式
 function stopEffects() {
+    // 1. 停止 3 秒倒數計時
     if (warningTimer) {
         clearTimeout(warningTimer);
         warningTimer = null;
     }
-    const btn = document.getElementById('warningBtn');
-    if (btn) btn.classList.remove('is-warning'); // 停止閃爍
     
-    stopBuzz(); // 停止聲音
-    if ("vibrate" in navigator) navigator.vibrate(0);
+    // 2. 停止按鈕閃爍 (移除暗紅/亮紅切換動畫)
+    const btn = document.getElementById('warningBtn');
+    if (btn) {
+        btn.classList.remove('is-warning');
+    }
+    
+    // 3. 停止聲音 (呼叫您原本的 stopBuzz)
+    stopBuzz();
+
+    // 4. 【核心修正】停止震動
+    // 傳入 0 或空陣列 [] 都可以停止手機震動
+    if ("vibrate" in navigator) {
+        navigator.vibrate(0);
+        // 保險起見，有些設備對 [] 支援度較好
+        navigator.vibrate([]); 
+    }
 }
 
 // D. 跳轉懲罰頁
@@ -1041,3 +1059,4 @@ function showDetail(dStr) {
 </script>
 </body>
 </html>
+
