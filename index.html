@@ -407,12 +407,16 @@ let oscillator;
 let gainNode;
 
 // 1. 產生低頻嗡嗡聲
+let audioCtx = null; // 放在 function 外層
+
 function startBuzz() {
     try {
-        // 1. 初始化 Context
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // 【關鍵修正】在播放前強制啟動 Context
+        // 如果 context 不存在，就建立一個新的
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        // 重點：如果被懸掛(suspended)，必須透過 pointerdown 事件觸發 resume
         if (audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
@@ -431,8 +435,13 @@ function startBuzz() {
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
         oscillator.start();
-    } catch(e) { console.log("Audio Error:", e); }
+        
+        console.log("Audio Context State:", audioCtx.state); // 檢查狀態用
+    } catch(e) { 
+        console.log("Audio Error:", e); 
+    }
 }
+
 
 function stopBuzz() {
     if (oscillator) {
@@ -608,23 +617,22 @@ function init() {
     // 3. 啟動按鈕監聽 (解決 Android 長按問題)
     setupWarningButton(); 
 
-    // 4. --- 新增：解鎖 iOS Web Audio 限制 (解決 iPhone 沒聲音) ---
-    const unlockAudio = () => {
-        // 建立一個臨時的 AudioContext 來解鎖
-        const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (tempCtx.state === 'suspended') {
-            tempCtx.resume().then(() => {
-                tempCtx.close(); // 解鎖後立即關閉，不佔資源
-                console.log("iOS Audio Unlocked");
-            });
-        }
-        // 只要使用者點擊或觸碰過一次，就移除監聽器
-        document.removeEventListener('touchstart', unlockAudio);
-        document.removeEventListener('click', unlockAudio);
+    // 針對 iPhone 的解鎖：當使用者第一次碰螢幕，就播放一個超短的無聲訊號
+    const unlock = () => {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        audioCtx.resume();
+        // 建立一個 0.001 秒的無聲震盪器，強迫 iOS 釋放聲音權限
+        let buffer = audioCtx.createBuffer(1, 1, 22050);
+        let source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioCtx.destination);
+        source.start(0);
+        
+        window.removeEventListener('touchstart', unlock);
+        window.removeEventListener('mousedown', unlock);
     };
-
-    document.addEventListener('touchstart', unlockAudio);
-    document.addEventListener('click', unlockAudio);
+    window.addEventListener('touchstart', unlock);
+    window.addEventListener('mousedown', unlock);
 }
 
 
@@ -1071,5 +1079,6 @@ function showDetail(dStr) {
 </html>
 
     
+
 
 
