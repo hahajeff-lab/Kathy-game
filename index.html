@@ -143,7 +143,64 @@ rt {
 .page-locked .lock-overlay {
     pointer-events: auto;
 }
+/* --- 修復後的設定頁 (Page 1) 與任務列排版 --- */
 
+/* 1. 僅縮小 Page 1 的內容，不干擾其他頁面 */
+#page1 .card * {
+    font-size: 18px !important;
+}
+#page1 .card h3 {
+    font-size: 22px !important;
+}
+#page1 input, #page1 button {
+    padding: 10px !important;
+    margin: 5px 0 !important;
+    box-sizing: border-box;
+}
+
+/* 2. 管理清單的小卡片樣式 */
+.setting-item {
+    background: white;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 10px;
+    border-left: 6px solid var(--primary);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 3. 核心排版修復：強制 Page 2 任務左右並排 */
+.item-row {
+    background: white;
+    margin-bottom: 10px;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.task-action-area {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.reward-info {
+    font-size: 22px !important;
+    font-weight: bold;
+    color: var(--primary);
+    flex-grow: 1; /* 讓文字佔滿剩餘空間 */
+}
+
+/* 確保按鈕在右邊且大小適中 */
+.task-action-area .main-btn {
+    width: 25% !important;
+    min-width: 80px;
+    margin: 0 !important;
+    padding: 10px 5px !important;
+    font-size: 18px !important;
+}
 
 
     /* 日曆部分 */
@@ -218,11 +275,27 @@ rt {
     animation: flash-warning 0.3s infinite; /* 0.3秒閃爍一次 */
 }
 
-
-
 /* 警告頁面專屬的橘色進度條 */
 .progress-bar.punish-style {
     background: #ff9800 !important; /* 橘色 */
+}
+
+.btn-edit {
+    background: none;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    padding: 4px 8px;
+    border-radius: 5px;
+    margin-right: 5px;
+    cursor: pointer;
+}
+.btn-delete {
+    background: none;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    padding: 4px 8px;
+    border-radius: 5px;
+    cursor: pointer;
 }
 
 </style>
@@ -240,31 +313,35 @@ rt {
         <button class="lock-btn" onclick="unlockStep('L')"></button>
         <button class="lock-btn" onclick="unlockStep('R')"></button>
     </div>
-    <div class="card">
-        <h3>新增任務</h3>
-        <input type="text" id="tName" placeholder="任務名稱">
-        <input type="text" id="tZy" placeholder="注音 (用全形逗號隔開)">
-        
-        <div class="type-toggle" style="display: flex; background: #eee; border-radius: 10px; padding: 4px; margin: 10px 0;">
-            <label id="labelReward" class="active" style="flex:1; text-align:center; padding:10px; border-radius:8px; cursor:pointer; font-size:18px; font-weight:bold; background:var(--primary); color:white;">
-                <input type="radio" name="tType" value="reward" checked onclick="updateToggleStyle()" style="display:none"> 獎勵
-            </label>
-            <label id="labelPunish" style="flex:1; text-align:center; padding:10px; border-radius:8px; cursor:pointer; font-size:18px; font-weight:bold; color:#333;">
-                <input type="radio" name="tType" value="punish" onclick="updateToggleStyle()" style="display:none"> 懲罰
-            </label>
-        </div>
+<div class="card">
+    <h3>新增任務</h3>
+    <input type="text" id="taskName" placeholder="任務名稱">
+    <input type="text" id="tZy" placeholder="注音 (用全形逗號隔開)">
+    
+    <div class="type-toggle" style="display: flex; background: #eee; border-radius: 10px; padding: 4px; margin: 10px 0;">
+        <label id="labelReward" class="active" style="flex:1; text-align:center; padding:10px; border-radius:8px; cursor:pointer; font-size:18px; font-weight:bold; background:var(--primary); color:white;">
+            <input type="radio" name="tType" value="reward" checked onclick="updateToggleStyle()" style="display:none"> 獎勵
+        </label>
+        <label id="labelPunish" style="flex:1; text-align:center; padding:10px; border-radius:8px; cursor:pointer; font-size:18px; font-weight:bold; color:#333;">
+            <input type="radio" name="tType" value="punish" onclick="updateToggleStyle()" style="display:none"> 懲罰
+        </label>
+    </div>
 
-        <input type="number" id="tTarget" placeholder="達成/違規所需次數">
-        <input type="number" id="tReward" placeholder="每次獎勵/扣除積分">
-        ...
+    <input type="number" id="taskCount" placeholder="達成/違規所需次數">
+    <input type="number" id="taskPoints" placeholder="每次獎勵/扣除積分">
 
         <div class="weekday-picker">
             <div class="day-btn" data-day="0">日</div><div class="day-btn" data-day="1">一</div><div class="day-btn" data-day="2">二</div>
             <div class="day-btn" data-day="3">三</div><div class="day-btn" data-day="4">四</div><div class="day-btn" data-day="5">五</div>
             <div class="day-btn" data-day="6">六</div>
         </div>
-        <button class="main-btn" onclick="saveTask()">確認新增任務</button>
-    </div>
+    <button class="main-btn" onclick="addSettingTask()">確認新增任務</button>
+    <div class="card" style="margin-top:20px;">
+    <h3>任務管理清單</h3>
+    <div id="taskList"></div>
+</div>
+
+</div>
     <div class="card">
         <h3>新增道具</h3>
         <input type="text" id="iName" placeholder="道具名稱">
@@ -273,7 +350,7 @@ rt {
         <button class="main-btn" style="background:var(--success)" onclick="saveItem()">確認新增道具</button>
     </div>
         <div class="card">
-        <h3>管理現有道具</h3>
+        <h3>商店道具管理</h3>
         <div id="manageItemList" style="margin-top: 10px;"></div>
     </div>
 
@@ -288,7 +365,11 @@ rt {
 <div id="page2" class="page">
     <div class="card">
         <h3>今日任務</h3>
-        <div id="activeTaskList"></div>
+                <div id="dailyTotal" style="margin-top:10px; font-size:20px;font-weight:bold; color:var(--primary);">
+            今日得分總計：0 分
+        </div>
+
+        <div id="activeTasks"></div>
     </div>
 
     <div id="warningBtn" class="warning-btn">🚨 長 按 3 秒 發 出 警 報 🚨</div>
@@ -315,6 +396,9 @@ rt {
     </div>
     <div class="card">
         <h3 id="detailDateTitle">點擊日期查看詳情</h3>
+        <div id="dailyTotalRecord" style="margin-top:10px;font-size:20px; font-weight:bold; color:var(--primary);">
+    當日得分總計：0 分
+</div>
         <div id="detailContent"></div>
     </div>
 </div>
@@ -346,722 +430,640 @@ rt {
     </div>
 </div>
 
-
-
 <script>
-// --- 家長鎖核心邏輯 ---
+// --- 1. 核心狀態與全域變數 ---
+let state = { points: 0, tasks: [], items: [], inventory: {}, dailyLogs: {} };
 let unlockSequence = [];
 let isAdminMode = false;
+let editingIndex = null;
+let warningTimer, audioCtx, oscillator, gainNode;
+// --- 道具管理核心變數 ---
+let editingItemIndex = null; // 紀錄目前正在編輯哪一個道具
+let enableParentLock = false; // 控制是否啟用家長鎖
+let autoUnlockOnInit = true;   // 控制是否在初始化時自動解鎖
+//家長鎖開關方法 e:f+a:t 開啟無鎖
+// 初始化：載入資料並啟動功能
+function init() {
+    const saved = localStorage.getItem('taskMasterV7');
+    if (saved) state = JSON.parse(saved);
+        // 如果設定要自動解鎖，就在初始化時解鎖
+    if (autoUnlockOnInit) {
+        isAdminMode = true;
+        const settingPage = document.getElementById('page1');
+        if (settingPage) settingPage.classList.remove('page-locked');
+    }
 
+    document.getElementById('displayPoints').innerText = state.points;
+    renderManageItems();
+    setupWarningButton(); // 啟動警告按鈕監聽
+    showPage(2); // 預設顯示任務頁
+}
+// --- 補上遺失的日期函式 ---
+function getTodayStr() {
+    const now = new Date();
+    // 回傳格式如 "2024-01-20"
+    return now.getFullYear() + '-' + 
+           String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+           String(now.getDate()).padStart(2, '0');
+}
+// 儲存資料到手機記憶體
+function save() {
+    localStorage.setItem('taskMasterV7', JSON.stringify(state));
+    document.getElementById('displayPoints').innerText = state.points;
+}
+
+      // --- 2. 分頁切換 ---
+    
+function showPage(num, el) {
+    if(enableParentLock){
+        isAdminMode = false;
+    unlockSequence = [];
+    const settingPage = document.getElementById('page1');
+    if (settingPage) settingPage.classList.add('page-locked');//切換分頁時鎖定頁面
+    }
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const targetPage = document.getElementById('page' + num);
+    if (targetPage) targetPage.classList.add('active');
+    
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (el) el.classList.add('active');
+
+    // 根據頁面編號執行渲染
+    if (num === 1) renderTasks();
+    if (num === 2) renderActiveTasks(); 
+    if (num === 3) renderShop();
+    if (num === 4) renderInventory();
+    if (num === 5) renderCalendar();
+    if (num === 6) renderPunishTasks();
+    window.scrollTo(0, 0);
+}
+
+// 家長解鎖邏輯 (左R、右L 序列)
 function unlockStep(side) {
-    // 這裡 side 會接收到 HTML 傳來的 'L' 或 'R'
     unlockSequence.push(side);
-    
-    // 檢查最後兩個動作是否為 'L' 然後 'R'
     const lastTwo = unlockSequence.slice(-2).join('');
-    
     if (lastTwo === 'LR') {
         isAdminMode = true;
-        // 成功解鎖：移除 page-locked 樣式
         const settingPage = document.getElementById('page1');
-        if (settingPage) {
-            settingPage.classList.remove('page-locked');
-        }
-        triggerVibrate(); // 震動回饋
+        if (settingPage) settingPage.classList.remove('page-locked');
+        triggerVibrate();
         alert("🔓 家長模式已開啟");
-        renderManageItems(); // <--- 補上這一行，解鎖後立刻顯示管理列表
-        unlockSequence = []; // 清空紀錄，準備下次使用
+        renderManageItems(); 
+        unlockSequence = [];
+    }
+}
+function addSettingTask() {
+    try {
+        const name = document.getElementById('taskName').value.trim();
+        const count = parseInt(document.getElementById('taskCount').value);
+        const points = parseInt(document.getElementById('taskPoints').value);
+        const zy = document.getElementById('tZy').value.trim();
+        
+        // 更保險的抓取方式
+        const realCheckbox = document.getElementById('tIsPunish');
+        const isPunish = realCheckbox ? realCheckbox.checked : false;
+
+        if (name && !isNaN(count) && !isNaN(points)) {
+            state.tasks.push({ 
+                id: Date.now(),
+                name: name, 
+                zy: zy, 
+                isPunish: isPunish,
+                total: count, 
+                points: points, 
+                current: 0 
+            });
+            
+            save(); // 呼叫儲存
+            
+            // 清空欄位
+            document.getElementById('taskName').value = '';
+            document.getElementById('taskCount').value = '';
+            document.getElementById('taskPoints').value = '';
+            document.getElementById('tZy').value = '';
+            
+            renderTasks(); 
+            alert('✅ 新增成功並已存檔！');
+        } else {
+            alert('請填寫完整資訊 (名稱、次數、積分)');
+        }
+    } catch (err) {
+        // 如果上面任何一行壞掉，手機會跳出這個訊息
+        alert("程式執行出錯: " + err.message);
     }
 }
 
-// 渲染管理道具列表 (帶有刪除按鈕)
+
+function renderTasks() {
+    const list = document.getElementById('taskList');
+    if (!list) return;
+    list.innerHTML = '';
+
+    state.tasks.forEach((task, index) => {
+        const div = document.createElement('div');
+        div.className = 'setting-item';
+
+        if (editingIndex === index) {
+            // 編輯模式：四個欄位並排顯示
+            div.innerHTML = `
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                    <span style="min-width:80px;">任務名稱</span>
+                    <input type="text" id="edit-name-${index}" class="edit-input" value="${task.name}">
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                    <span style="min-width:80px;">注音</span>
+                    <input type="text" id="edit-zy-${index}" class="edit-input" value="${task.zy || ''}" placeholder="注音 (用全形逗號隔開)">
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                    <span style="min-width:80px;">完成次數</span>
+                    <input type="number" id="edit-count-${index}" class="edit-input" value="${task.total}">
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                    <span style="min-width:80px;">獲得積分</span>
+                    <input type="number" id="edit-points-${index}" class="edit-input" value="${task.points}">
+                </div>
+                <div style="margin-top:10px;">
+                    <button onclick="saveEdit(${index})" 
+                        style="background:var(--success); color:white; border:none; padding:8px 15px; border-radius:5px;">
+                        儲存
+                    </button>
+                    <button onclick="cancelEdit()" 
+                        style="background:var(--gray); color:white; border:none; padding:8px 15px; border-radius:5px;">
+                        取消
+                    </button>
+                </div>
+            `;
+        } else {
+            // 顯示模式
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong>${formatRuby(task.name, task.zy)}</strong><br>
+                        <small>
+                            ${task.isPunish ? '🚨 懲罰' : '✅ 獎勵'} 
+                            | 分數:${task.points} 
+                            | 目標:${task.total}次
+                        </small>
+                    </div>
+                    <div>
+                        <button class="btn-edit" onclick="startEdit(${index})">編輯</button>
+                        <button class="btn-delete" onclick="deleteTask(${index})">刪除</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        list.appendChild(div);
+    });
+}
+function startEdit(i) { editingIndex = i; renderTasks(); }
+function cancelEdit() { editingIndex = null; renderTasks(); }
+function saveEdit(i) {
+    state.tasks[i].name = document.getElementById(`edit-name-${i}`).value;
+        state.tasks[i].zy = document.getElementById(`edit-zy-${i}`).value; // 新增注音欄位
+
+    state.tasks[i].total = parseInt(document.getElementById(`edit-count-${i}`).value);
+    state.tasks[i].points = parseInt(document.getElementById(`edit-points-${i}`).value);
+    editingIndex = null;
+    save(); renderTasks();
+}
+function deleteTask(i) { if(confirm("確定刪除？")){ state.tasks.splice(i,1); save(); renderTasks(); } }
+
+// --- 4. 任務執行與渲染 ---
+function renderActiveTasks() {
+    const container = document.getElementById('activeTasks');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    const dStr = getTodayStr();
+    if (!state.dailyLogs[dStr]) state.dailyLogs[dStr] = { done: {}, buy: {}, use: {} };
+
+    // 1. 取得獎勵任務清單
+    const rewardTasks = state.tasks.filter(t => !t.isPunish);
+    
+    // 除錯：如果完全沒任務，顯示提示
+    if (rewardTasks.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:40px; color:#999;">目前沒有獎勵任務，請至設定頁新增。</div>';
+        return;
+    }
+
+    rewardTasks.forEach(t => {
+        // 使用 t.id 作為查詢關鍵字
+        const count = state.dailyLogs[dStr].done[t.id] || 0;
+        const progress = Math.min((count / t.total) * 100, 100);
+        const isFull = count >= t.total;
+        
+        const taskDiv = document.createElement('div');
+        taskDiv.className = 'item-row';
+        taskDiv.innerHTML = `
+            <div>
+                <strong>${formatRuby(t.name, t.zy)}</strong>
+                <span style="font-size:18px; color:#666;"> (${count}/${t.total})</span>
+            </div>
+            
+            <div class="progress-container" style="width: 100%; background: #eee; height: 12px; border-radius: 6px; margin: 10px 0; overflow: hidden;">
+                <div class="progress-bar" style="width: ${progress}%; background: ${isFull ? '#fbc02d' : '#1a73e8'}; height: 100%; transition: width 0.3s;"></div>
+            </div>
+
+            <div class="task-action-area" style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="reward-info" style="font-size:18px; color:var(--success);">🎁 獎勵: ${t.points} 積分</div>
+                <button class="main-btn" 
+                    style="width:auto !important; min-width:80px; margin:0; padding:5px 20px; font-size:18px;"
+                    onclick="doAction(${t.id})" 
+                    ${isFull ? 'disabled' : ''}>
+                    ${isFull ? '已完成' : '+1'}
+                </button>
+            </div>
+        `;
+        container.appendChild(taskDiv);
+    });
+    renderDailyTotal();
+
+}
+
+
+function renderPunishTasks() {
+    const list = document.getElementById('punishTaskList');
+    if(!list) return;
+    const dStr = getTodayStr();
+    list.innerHTML = '';
+    state.tasks.filter(t => t.isPunish).forEach(t => {
+        const count = state.dailyLogs[dStr].done[t.id] || 0;
+        list.innerHTML += `<div class="item-row">
+            <strong style="color:var(--danger)">${formatRuby(t.name, t.zy)}</strong> (${count}/${t.total})
+            <button class="main-btn" style="background:var(--danger)" onclick="doAction(${t.id})">+1 違規</button>
+        </div>`;
+    });
+}
+
+function doAction(id) {
+    const dStr = getTodayStr();
+    const task = state.tasks.find(t => t.id === id);
+    if (!state.dailyLogs[dStr]) state.dailyLogs[dStr] = { done: {}, buy: {}, use: {} };
+    state.dailyLogs[dStr].done[id] = (state.dailyLogs[dStr].done[id] || 0) + 1;
+    const currentCount = state.dailyLogs[dStr].done[id];
+    if (currentCount <= task.total) {
+        if (task.isPunish) {
+            state.points = Math.max(0, state.points - task.points);
+            triggerVibrate(); alert("🚨 違規達標，已扣分！");
+        } else {
+            state.points += task.points;
+            playDing(); triggerVibrate(); alert("🎉 任務完成！");
+        }
+    
+    }else {
+        alert("⚠️ 已達上限，無法再計分！");
+    }
+
+    save();
+    renderActiveTasks();
+    renderPunishTasks();
+    renderDailyTotal(); // 更新每日總分
+
+}
+
+function renderDailyTotal(dateStr = getTodayStr(), elementId = "dailyTotal") {
+    let total = 0;
+    if (state.dailyLogs[dateStr] && state.dailyLogs[dateStr].done) {
+        for (const [taskId, count] of Object.entries(state.dailyLogs[dateStr].done)) {
+            const task = state.tasks.find(t => t.id == taskId);
+            if (task) {
+                const validCount = Math.min(count, task.total);
+                if (task.isPunish) {
+                    total -= validCount * task.points; // 懲罰扣分
+                } else {
+                    total += validCount * task.points; // 獎勵加分
+                }
+            }
+        }
+    }
+    document.getElementById(elementId).innerText = `當日得分總計：${total} 分`;
+}
+// --- 5. 商店、背包與日曆 ---
+function saveItem() {
+    const name = document.getElementById('iName').value.trim();
+    const cost = parseInt(document.getElementById('iCost').value);
+    const zy = document.getElementById('iZy').value.trim();
+    if (name && !isNaN(cost)) {
+        state.items.push({ name, cost, zy });
+        save(); alert("✅ 道具新增成功");
+        renderManageItems();
+    }
+}
+
+
+// 1. 渲染道具管理清單 (設定頁 Page 1)
 function renderManageItems() {
     const list = document.getElementById('manageItemList');
     if (!list) return;
     list.innerHTML = '';
 
     state.items.forEach((item, index) => {
-        list.innerHTML += `
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee;">
-                <div>
-                    <strong>${item.name}</strong> 
-                    <small style="color:#666">(${item.cost} 積分)</small>
-                </div>
-                <button onclick="deleteItem(${index})" style="background:none; border:none; color:red; cursor:pointer; font-size:18px;">🗑️</button>
-            </div>`;
-    });
-
-    if (state.items.length === 0) {
-        list.innerHTML = '<p style="text-align:center; color:#999; font-size:14px;">目前沒有道具</p>';
-    }
-}
-
-// 執行刪除道具
-function deleteItem(index) {
-    if (confirm(`確定要移除「${state.items[index].name}」嗎？這不會影響已經兌換到背包裡的道具。`)) {
-        state.items.splice(index, 1);
-        save();
-        renderManageItems(); // 重新整理管理列表
-        renderShop();        // 同步更新商店頁面
-    }
-}
-
-let warningTimer;
-let audioCtx;
-let oscillator;
-let gainNode;
-
-// 1. 產生低頻嗡嗡聲
-function startBuzz() {
-    try {
-                if ("vibrate" in navigator) {
-        // --- 加入震動回饋 ---
-            // 設定一個規律的震動模式：震動 200ms，停 100ms，循環
-            navigator.vibrate([200, 100, 200, 100, 200, 100, 200]);
-        }
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        oscillator = audioCtx.createOscillator();
-        gainNode = audioCtx.createGain();
-
-        oscillator.type = 'triangle'; // 三角波比鋸齒波更清脆
-        
-        // 設定一個不斷變化的頻率 (警報聲效果)
-        oscillator.frequency.setValueAtTime(300, audioCtx.currentTime); 
-        oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 1);
-        oscillator.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 2);
-        oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 3);
-        
-        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime); // 稍微調大音量
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        oscillator.start();
-    } catch(e) { console.log("Audio Error"); }
-}
-function stopBuzz() {
-    if (oscillator) {
-        oscillator.stop();
-        oscillator.disconnect();
-    }
-    if (audioCtx) audioCtx.close();
-}
-
-// 2. 長按邏輯
-
-// A. 啟動警告
-// A. 啟動警告：按下時觸發
-// --- 警告功能核心邏輯 ---
-
-// A. 啟動警告
-function handleWarningStart() {
-    stopEffects(); // 清理舊狀態
-
-    const btn = document.getElementById('warningBtn');
-    if (btn) btn.classList.add('is-warning'); // 開始閃爍
-    
-    startBuzz(); // 播放警報聲
-
-    // 啟動 3 秒計時
-    warningTimer = setTimeout(() => {
-        finishWarning();
-    }, 3000);
-}
-
-// B. 停止特效
-function handleWarningEnd() {
-    stopEffects();
-}
-
-// C. 清理函式
-function stopEffects() {
-    // 1. 停止 3 秒倒數計時
-    if (warningTimer) {
-        clearTimeout(warningTimer);
-        warningTimer = null;
-    }
-    
-    // 2. 停止按鈕閃爍 (移除暗紅/亮紅切換動畫)
-    const btn = document.getElementById('warningBtn');
-    if (btn) {
-        btn.classList.remove('is-warning');
-    }
-    
-    // 3. 停止聲音 (呼叫您原本的 stopBuzz)
-    stopBuzz();
-
-    // 4. 【核心修正】停止震動
-    // 傳入 0 或空陣列 [] 都可以停止手機震動
-    if ("vibrate" in navigator) {
-        navigator.vibrate(0);
-        // 保險起見，有些設備對 [] 支援度較好
-        navigator.vibrate([]); 
-    }
-}
-
-// D. 跳轉懲罰頁
-function finishWarning() {
-    stopEffects();
-    showPage(6); // 進入 Page 6
-}
-
-// E. 重新綁定按鈕 (這是解決 Android 沒反應的關鍵)
-function setupWarningButton() {
-    const btn = document.getElementById('warningBtn');
-    if (!btn) return;
-
-    // 徹底封鎖右鍵選單
-    btn.addEventListener('contextmenu', e => e.preventDefault());
-
-    // 按下
-    btn.addEventListener('pointerdown', e => {
-        e.preventDefault();
-        handleWarningStart();
-    }, { passive: false });
-
-    // 放開、離開、取消
-    const endAction = (e) => {
-        e.preventDefault();
-        handleWarningEnd();
-    };
-    btn.addEventListener('pointerup', endAction);
-    btn.addEventListener('pointercancel', endAction);
-    btn.addEventListener('pointerleave', endAction);
-}
-
-
-// C. 核心清理函式：確保所有特效立刻消失
-function stopEffects() {
-    if (warningTimer) {
-        clearTimeout(warningTimer);
-        warningTimer = null;
-    }
-    
-    // 移除按鈕的閃爍狀態
-    const btn = document.getElementById('warningBtn');
-    if (btn) btn.classList.remove('is-warning');
-    
-    // 停止警報音效
-    stopBuzz();
-    
-    // 停止手機震動
-    if ("vibrate" in navigator) navigator.vibrate(0);
-}
-
-// D. 成功觸發：3 秒到，自動跳轉到懲罰頁
-function finishWarning() {
-    stopEffects();
-    showPage(6); // 這裡是跳轉到您的「懲罰任務清單」頁面
-}
-
-function renderPunishTasks() {
-    const list = document.getElementById('punishTaskList');
-    const dStr = getTodayStr();
-    
-    if (!state.dailyLogs[dStr]) state.dailyLogs[dStr] = { done: {}, buy: {}, use: {} };
-    
-    list.innerHTML = '';
-    const punishTasks = state.tasks.filter(t => t.isPunish === true);
-
-    punishTasks.forEach(t => {
-        const count = state.dailyLogs[dStr].done[t.id] || 0;
-        const progress = (count / t.target) * 100;
-        
-        // 【關鍵邏輯】：如果次數已達到目標，則將按鈕設為禁用狀態 (disabled)
-        const isFull = count >= t.target;
-
         const div = document.createElement('div');
-        div.className = 'item-row';
-        div.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:flex-end">
-                <strong style="color:var(--danger)">${formatRuby(t.name, t.zy)}</strong>
-                <span style="font-size:16px; color:#666;">${count} / ${t.target}</span>
-            </div>
-            
-            <div class="progress-container">
-                <div class="progress-bar punish-style ${isFull ? 'complete' : ''}" 
-                     style="width: ${Math.min(progress, 100)}%"></div>
-            </div>
+        div.className = 'setting-item'; // 使用與任務相同的樣式
 
-            <div class="task-action-area">
-                <button class="main-btn" 
-                    style="background:${isFull ? '#ccc' : 'var(--danger)'}" 
-                    onclick="doAction(${t.id})" 
-                    ${isFull ? 'disabled' : ''}>
-                    ${isFull ? '已扣分' : '+1 違規'}
-                </button>
-                <div class="reward-info" style="color:var(--danger)">
-                    ${formatRuby("扣除", "ㄎㄡˋ ㄔㄨˊ")}：${t.reward} 積分
-                </div>
-            </div>
-        `;
-        list.appendChild(div);
-    });
-
-    if (punishTasks.length === 0) {
-        list.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">目前沒有設定懲罰項目</p>';
-    }
-}
-
-  // --- 核心資料狀態 ---
-    let state = {
-        points: 0,
-        tasks: [],
-        items: [],
-        inventory: {},
-        dailyLogs: {}
-    };
-
-    // 載入資料
-function init() {
-    const saved = localStorage.getItem('taskMasterV7');
-    if (saved) state = JSON.parse(saved);
-    document.getElementById('displayPoints').innerText = state.points;
-    
-    // 必須有這一行，上面的 setupWarningButton 才會生效！
-    setupWarningButton(); 
-}
-
-    function save() {
-        localStorage.setItem('taskMasterV7', JSON.stringify(state));
-        document.getElementById('displayPoints').innerText = state.points;
-    }
-
-    const getTodayStr = () => new Date().toLocaleDateString('en-CA');
-
-    // --- 分頁切換核心邏輯 ---
-// 修改後的分頁切換：確保每一次切換都重置鎖定狀態
-function showPage(num, el) {
-    // 1. 強制重置家長模式狀態（除了切換到設定頁本身時需要判斷，其他頁面一律鎖定）
-    isAdminMode = false;
-    unlockSequence = [];
-    
-    const settingPage = document.getElementById('page1');
-    if (settingPage) {
-        settingPage.classList.add('page-locked');
-    }
-
-    // 2. 切換頁面 Active 狀態
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    const target = document.getElementById('page' + num);
-    if (target) target.classList.add('active');
-    
-    // 3. 更新導覽列按鈕顏色
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    if (el) el.classList.add('active');
-
-    // 4. 根據編號執行對應的渲染
-    if (num === 2) renderTasks();
-    if (num === 3) renderShop();
-    if (num === 4) renderInventory();
-    if (num === 5) renderCalendar();
-    if (num === 6) renderPunishTasks(); // 進入懲罰頁
-    
-    window.scrollTo(0, 0);
-}
-
-
-    // --- 特效與反饋 ---
-    function playDing() {
-        try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain); gain.connect(ctx.destination);
-            osc.frequency.setValueAtTime(880, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-            osc.start(); osc.stop(ctx.currentTime + 0.5);
-        } catch(e) { console.log("Audio not supported"); }
-    }
-
-    function triggerVibrate() {
-        if ("vibrate" in navigator) navigator.vibrate([100, 50, 100]);
-    }
-
-    // --- 設定分頁功能 ---
-    document.querySelectorAll('.day-btn').forEach(btn => {
-        btn.onclick = () => btn.classList.toggle('selected');
-    });
-
-function updateToggleStyle() {
-    const isPunish = document.querySelector('input[name="tType"]:checked').value === 'punish';
-    document.getElementById('labelReward').style.background = isPunish ? '#eee' : 'var(--primary)';
-    document.getElementById('labelReward').style.color = isPunish ? '#333' : 'white';
-    document.getElementById('labelPunish').style.background = isPunish ? 'var(--danger)' : '#eee';
-    document.getElementById('labelPunish').style.color = isPunish ? 'white' : '#333';
-}
-
-function saveTask() {
-    const name = document.getElementById('tName').value.trim();
-    const zy = document.getElementById('tZy').value.trim();
-    const target = parseInt(document.getElementById('tTarget').value);
-    const reward = parseInt(document.getElementById('tReward').value);
-    
-    // 關鍵：抓取目前 Radio Button 的選擇狀態
-    const typeEl = document.querySelector('input[name="tType"]:checked');
-    const isPunish = typeEl ? (typeEl.value === 'punish') : false;
-    
-    const days = Array.from(document.querySelectorAll('.day-btn.selected')).map(b => parseInt(b.dataset.day));
-    
-    if (!name || isNaN(target) || isNaN(reward)) return alert("請填寫完整資訊");
-
-    state.tasks.push({ 
-        id: Date.now(), 
-        name: name, 
-        zy: zy,
-        isPunish: isPunish, // 存入懲罰標籤
-        target: target, 
-        reward: reward, 
-        days: days 
-    });
-
-    save();
-    alert(isPunish ? "⚠️ 懲罰項目已新增" : "✅ 任務新增成功！");
-
-    // 清空欄位並重設開關
-    document.getElementById('tName').value = '';
-    document.getElementById('tZy').value = '';
-    document.getElementById('tTarget').value = '';
-    document.getElementById('tReward').value = '';
-    document.querySelector('input[name="tType"][value="reward"]').checked = true;
-    updateToggleStyle();
-}
-
-
-function saveItem() {
-    // 1. 安全抓取欄位：先確認欄位是否存在，防止程式當機
-    const nameEl = document.getElementById('iName');
-    const zyEl = document.getElementById('iZy');
-    const costEl = document.getElementById('iCost');
-
-    // 2. 防呆檢查：如果 HTML 漏寫了欄位，這裡會報錯但不會讓整個網頁死掉
-    if (!nameEl || !zyEl || !costEl) {
-        console.error("錯誤：找不到 iName, iZy 或 iCost 欄位！請檢查 HTML。");
-        alert("程式找不到輸入框，請檢查設定頁面！");
-        return;
-    }
-
-    // 3. 抓取數值
-    const name = nameEl.value.trim();
-    const zy = zyEl.value.trim();
-    const cost = parseInt(costEl.value);
-
-    // 4. 邏輯判斷：這就是你說的「沒填寫」時應該要出現的提示
-    if (!name || isNaN(cost)) {
-        alert("⚠️ 請填寫道具名稱與積分！"); // 如果沒填，現在會彈出這個
-        return;
-    }
-
-    // 5. 正確存入 state (使用 key: value 完整寫法最安全)
-    state.items.push({ 
-        name: name, 
-        zy: zy, 
-        cost: cost 
-    });
-
-    // 6. 儲存並反饋
-    save(); 
-    alert("✅ 道具新增成功！");
-renderManageItems(); // <--- 補上這一行
-    // 7. 清空欄位
-    nameEl.value = '';
-    zyEl.value = '';
-    costEl.value = '';
-}
-
-function formatRuby(text, zyStr) {
-    // 1. 如果沒輸入注音，直接回傳原文字
-    if (!zyStr || zyStr.trim() === "") return text;
-
-    const chars = text.split('');
-    const zys = zyStr.split('，'); // 確保你是用全形逗號
-    let html = ''; // 先建立一個空盒子
-
-    // 2. 一個字一個字處理
-    chars.forEach((c, i) => {
-        const z = zys[i] ? zys[i].trim() : ''; // 取得對應注音，沒有就留空
-        html += `<ruby>${c}<rt>${z}</rt></ruby>`; // 把注音和字包起來，「黏」到 html 後面
-    });
-
-    // 3. 最後把整串組好的 HTML 丟回去
-    return html; 
-}
-
-    // --- 任務分頁核心渲染 ---
-    function renderTasks() {
-        const list = document.getElementById('activeTaskList');
-        const dStr = getTodayStr();
-        const dayOfWeek = new Date().getDay();
-        
-        if (!state.dailyLogs[dStr]) state.dailyLogs[dStr] = { done: {}, buy: {}, use: {} };
-        
-        list.innerHTML = '';
-        state.tasks.forEach(t => {
-            if (t.isPunish) return; 
-            if (t.days.length > 0 && !t.days.includes(dayOfWeek)) return;
-            
-            const count = state.dailyLogs[dStr].done[t.id] || 0;
-            const isFull = count >= t.target;
-            const progress = (count / t.target) * 100;
-
-            const div = document.createElement('div');
-            div.className = 'item-row';
+        if (editingItemIndex === index) {
+            // 編輯模式
             div.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:flex-end">
-                    <strong>${formatRuby(t.name, t.zy)}</strong>
-                    <span style="font-size:16px; color:#666;">${count} / ${t.target}</span>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                    <span style="min-width:80px;">道具</span>
+                    <input type="text" id="edit-item-name-${index}" class="edit-input" value="${item.name}">
                 </div>
-                <div class="progress-container">
-                    <div class="progress-bar ${isFull ? 'complete' : ''}" style="width: ${Math.min(progress, 100)}%"></div>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                    <span style="min-width:80px;">注音</span>
+                    <input type="text" id="edit-item-zy-${index}" class="edit-input" value="${item.zy}">
                 </div>
-                <div class="task-action-area">
-                    <button class="main-btn" style="background:${isFull ? '#ccc' : ''}" 
-                        onclick="doAction(${t.id})" ${isFull ? 'disabled' : ''}>
-                        ${isFull ? '✅' : '+1'}
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                    <span style="min-width:80px;">注音</span>
+                    <input type="number" id="edit-item-cost-${index}" class="edit-input" value="${item.cost}">
+                </div>
+            
+                <div style="margin-top:10px;">
+                    <button onclick="saveEditItem(${index})" 
+                        style="background:var(--success); color:white; border:none; padding:8px 15px; border-radius:5px;">
+                        儲存
                     </button>
-                    <div class="reward-info">
-                        ${formatRuby("獎勵", "ㄐㄧㄤˇ，ㄌㄧˋ")}：${t.reward} 積分
+                    <button onclick="cancelEditItem()" 
+                        style="background:var(--gray); color:white; border:none; padding:8px 15px; border-radius:5px;">
+                        取消
+                    </button>
+                </div>
+            `;
+        } else {
+            // 顯示模式
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong>${formatRuby(item.name, item.zy)}</strong><br>
+                        <span style="font-size:14px; color:#666;">價格: ${item.cost} 積分</span>
+                    </div>
+                    <div>
+                        <button class="btn-edit" onclick="startEditItem(${index})">編輯</button>
+                        <button class="btn-delete" onclick="deleteItem(${index})">刪除</button>
                     </div>
                 </div>
             `;
-            list.appendChild(div);
-        });
-        if(list.innerHTML === '') list.innerHTML = '<p style="text-align:center; color:#999;">今日無設定任務</p>';
-    }
-
-    function doAction(id) {
-    const dStr = getTodayStr();
-    const task = state.tasks.find(t => t.id === id);
-    
-    // 1. 確保今天有紀錄容器
-    if (!state.dailyLogs[dStr]) state.dailyLogs[dStr] = { done: {}, buy: {}, use: {} };
-    
-    // 2. 增加次數紀錄
-    state.dailyLogs[dStr].done[id] = (state.dailyLogs[dStr].done[id] || 0) + 1;
-    const currentCount = state.dailyLogs[dStr].done[id];
-    
-    if (task.isPunish) {
-        // --- 懲罰邏輯：只有達到目標次數時，才執行扣分 ---
-        if (currentCount === task.target) {
-            state.points -= task.reward;
-            if (state.points < 0) state.points = 0; // 確保積分不為負數
-            
-            triggerLongVibrate(); // 執行強烈震動提示已扣分
-            alert(`⚠️ 違規次數已達標：扣除 ${task.reward} 積分！`);
         }
-        renderPunishTasks(); // 重新渲染懲罰頁
-    } else {
-        // --- 獎勵邏輯：只有達到目標次數時，才給予獎勵 ---
-        if (currentCount === task.target) {
-            state.points += task.reward;
-            triggerVibrate(); // 一般震動
-            playDing();       // 播放獎勵音效
-        }
-        renderTasks(); // 重新渲染任務頁
-    }
-    
-    save(); // 儲存到 LocalStorage
+        list.appendChild(div);
+    });
 }
 
+// 2. 啟動道具編輯
+function startEditItem(index) {
+    editingItemIndex = index;
+    renderManageItems();
+}
 
+// 3. 取消道具編輯
+function cancelEditItem() {
+    editingItemIndex = null;
+    renderManageItems();
+}
 
-    // --- 商店與背包渲染 ---
+// 4. 儲存道具編輯
+function saveEditItem(index) {
+    const newName = document.getElementById(`edit-item-name-${index}`).value.trim();
+    const newZy = document.getElementById(`edit-item-zy-${index}`).value.trim();
+    const newCost = parseInt(document.getElementById(`edit-item-cost-${index}`).value);
+
+    if (newName && !isNaN(newCost)) {
+        // 更新資料
+        state.items[index].name = newName;
+        state.items[index].zy = newZy;
+        state.items[index].cost = newCost;
+        
+        editingItemIndex = null;
+        save();
+        renderManageItems(); // 刷新管理列表
+        renderShop();        // 刷新商店頁
+    } else {
+        alert("請填寫正確的名稱與分數！");
+    }
+}
+
+// 5. 刪除道具
+function deleteItem(index) {
+    const itemName = state.items[index].name;
+    if (confirm(`確定要刪除道具「${itemName}」嗎？\n(這不會影響已購買的背包內容)`)) {
+        state.items.splice(index, 1);
+        save();
+        renderManageItems();
+        renderShop();
+    }
+}
+
 function renderShop() {
     const list = document.getElementById('shopList');
     list.innerHTML = '';
     state.items.forEach(i => {
         const canBuy = state.points >= i.cost;
-        list.innerHTML += `
-            <div class="item-row" style="display:flex; justify-content:space-between; align-items:center">
-                <div><strong>${formatRuby(i.name, i.zy)}</strong><br><small>${i.cost} 積分</small></div>
-                <button class="main-btn" style="width:auto; padding:8px 15px; background:${canBuy ? 'var(--warning)' : '#eee'}" 
-                    onclick="buyItem('${i.name}', ${i.cost})" ${canBuy ? '' : 'disabled'}>兌換</button>
-            </div>`;
+        list.innerHTML += `<div class="item-row">
+            <strong>${formatRuby(i.name, i.zy)}</strong> (${i.cost} 積分)
+            <button class="main-btn" style="width:auto;background:${canBuy?'var(--warning)':'#ccc'}" onclick="buyItem('${i.name}', ${i.cost})" ${canBuy?'':'disabled'}>兌換</button>
+        </div>`;
     });
 }
 
-  function buyItem(name, cost) {
-        const dStr = getTodayStr();
-        state.points -= cost;
-        state.inventory[name] = (state.inventory[name] || 0) + 1;
-        if(!state.dailyLogs[dStr]) state.dailyLogs[dStr] = { done:{}, buy:{}, use:{} };
-        state.dailyLogs[dStr].buy[name] = (state.dailyLogs[dStr].buy[name] || 0) + 1;
-        save();
-    triggerVibrate(); // 觸發震動
-    alert(`兌換成功：${name}`); // 提示成功
-    renderShop();
+function buyItem(name, cost) {
+    state.points -= cost;
+    state.inventory[name] = (state.inventory[name] || 0) + 1;
+    save(); renderShop(); alert("兌換成功");
 }
+
 function renderInventory() {
     const list = document.getElementById('myItemsList');
     list.innerHTML = '';
     for (let name in state.inventory) {
         if (state.inventory[name] > 0) {
-            // 關鍵：從道具清單中找回該道具的原始資料(包含注音)
-            const itemData = state.items.find(i => i.name === name) || {zy: ""};
-            
-            list.innerHTML += `
-                <div class="item-row" style="display:flex; justify-content:space-between; align-items:center">
-                    <div><strong>${formatRuby(name, itemData.zy)}</strong> (持有: ${state.inventory[name]})</div>
-                    <button class="main-btn" style="width:auto; padding:8px 15px; background:var(--success)" onclick="useItem('${name}')">使用</button>
-                </div>`;
+            const item = state.items.find(i => i.name === name) || {zy:""};
+            list.innerHTML += `<div class="item-row">
+                <strong>${formatRuby(name, item.zy)}</strong> (x${state.inventory[name]})
+                <button class="main-btn" style="width:auto;background:var(--success)" onclick="useItem('${name}')">使用</button>
+            </div>`;
         }
     }
 }
 
-    function useItem(name) {
-        const dStr = getTodayStr();
-        state.inventory[name]--;
-        if(!state.dailyLogs[dStr]) state.dailyLogs[dStr] = { done:{}, buy:{}, use:{} };
-        state.dailyLogs[dStr].use[name] = (state.dailyLogs[dStr].use[name] || 0) + 1;
-        save();
-        renderInventory();
-    triggerVibrate(); // 觸發震動
-    alert(`使用了：${name}`); // 提示成功
-    renderInventory();
+function useItem(name) {
+    state.inventory[name]--;
+    save(); renderInventory(); alert("使用了：" + name);
 }
-    // --- 日曆核心渲染 ---
-        function renderCalendar() {
-        const grid = document.getElementById('calendarGrid');
-        grid.innerHTML = '';
-        const now = new Date();
-        const y = now.getFullYear();
-        const m = now.getMonth();
-        document.getElementById('calTitle').innerText = `${y} 年 ${m + 1} 月`;
-        
-        const firstDay = new Date(y, m, 1).getDay();
-        const daysInMonth = new Date(y, m + 1, 0).getDate();
 
-        for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
-
-        for (let i = 1; i <= daysInMonth; i++) {
-            const date = new Date(y, m, i);
-            const dStr = date.toLocaleDateString('en-CA');
-            const hasData = state.dailyLogs[dStr];
-            
-            // --- 新增：檢查當天是否有違規紀錄 ---
-            let hasPunish = false;
-            if (hasData && hasData.done) {
-                hasPunish = Object.keys(hasData.done).some(id => {
-                    const t = state.tasks.find(task => task.id == id);
-                    return t && t.isPunish;
-                });
-            }
-
-            const div = document.createElement('div');
-            // 在這裡加入 cal-punish-mark 類名
-            div.className = `cal-day ${dStr === getTodayStr() ? 'cal-today' : ''} ${hasData ? 'cal-has-data' : ''} ${hasPunish ? 'cal-punish-mark' : ''}`;
-            
-            div.innerText = i;
-            div.onclick = (e) => {
-                document.querySelectorAll('.cal-day').forEach(d => d.classList.remove('cal-selected'));
-                e.currentTarget.classList.add('cal-selected');
-                showDetail(dStr);
-            };
-            grid.appendChild(div);
-        }
+function renderCalendar() {
+    const grid = document.getElementById('calendarGrid');
+    grid.innerHTML = '';
+    const now = new Date();
+    const y = now.getFullYear(), m = now.getMonth();
+    document.getElementById('calTitle').innerText = `${y}年${m+1}月`;
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    for (let i = 1; i <= daysInMonth; i++) {
+        const dStr = `${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+        const hasData = state.dailyLogs[dStr];
+        const div = document.createElement('div');
+        div.className = `cal-day ${hasData?'cal-has-data':''}`;
+        div.innerText = i;
+        div.onclick = () => showDetail(dStr);
+        grid.appendChild(div);
     }
-
+}
 
 function showDetail(dStr) {
-    const content = document.getElementById('detailContent');
-    document.getElementById('detailDateTitle').innerText = dStr + " 詳情";
-    const log = state.dailyLogs[dStr] || { done: {}, buy: {}, use: {} };
-    
-    let html = "";
+    const log = state.dailyLogs[dStr] || { done: {} };
+    let html =`<strong>${dStr}</strong><br>`;
+    for (let id in log.done) {
+        const t = state.tasks.find(task => task.id == id);
+        if (t) html += `${t.name}: ${log.done[id]}次<br>`;
+    }
+    document.getElementById('detailContent').innerHTML = html;
 
-    // 1. 處理任務與違規紀錄
-    const doneIds = Object.keys(log.done);
-    if (doneIds.length > 0) {
-        let rewardHtml = "<strong>✅ 完成任務:</strong><br>";
-        let punishHtml = "<strong>🚨 違規紀錄:</strong><br>";
-        let hasReward = false;
-        let hasPunish = false;
+    // 顯示每日總分在紀錄頁
+    renderDailyTotal(dStr, "dailyTotalRecord");
+}
+// --- 6. 音效、警告按鈕邏輯與結尾 ---
+function playDing() {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+    osc.start(); osc.stop(ctx.currentTime + 0.5);
+}
 
-        doneIds.forEach(id => {
-            const task = state.tasks.find(t => t.id == id);
-            if (task) {
-                const count = log.done[id];
-                if (task.isPunish) {
-                    // 計算實際扣分：達標次數才算一次扣分
-                    const penaltyTimes = Math.floor(count / task.target);
-                    const totalDeduction = penaltyTimes * task.reward;
+function triggerVibrate() { if ("vibrate" in navigator) navigator.vibrate([100, 50, 100]); }
+
+function setupWarningButton() {
+    const btn = document.getElementById('warningBtn');
+    if (!btn) return;
+    btn.addEventListener('pointerdown', e => { e.preventDefault(); handleWarningStart(); });
+    const end = () => stopEffects();
+    btn.addEventListener('pointerup', end);
+    btn.addEventListener('pointercancel', end);
+}
+
+function handleWarningStart() {
+    const btn = document.getElementById('warningBtn');
+    if (btn) btn.classList.add('is-warning');
+    warningTimer = setTimeout(() => { stopEffects(); showPage(6); }, 3000);
+}
+
+function stopEffects() {
+    if (warningTimer) clearTimeout(warningTimer);
+    const btn = document.getElementById('warningBtn');
+    if (btn) btn.classList.remove('is-warning');
+}
+
+function formatRuby(text, zyStr) {
+    if (!zyStr) return text;
+    const chars = text.split(''), zys = zyStr.split('，');
+    return chars.map((c, i) => `<ruby>${c}<rt>${zys[i]||''}</rt></ruby>`).join('');
+}
+
+function exportData() {
+    try {
+        // 1. 檢查資料是否正常
+        if (!state) {
+            alert("目前沒有資料可以備份");
+            return;
+        }
+
+        // 2. 將 state 轉為 JSON 字串
+        const dataStr = JSON.stringify(state, null, 2);
+        
+        // 3. 建立 Blob 物件 (手機端下載的關鍵)
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        
+        // 4. 建立隱形的下載連結
+        const a = document.createElement('a');
+        a.href = url;
+        // 檔名加上日期，方便辨識
+        const date = new Date().toISOString().slice(0, 10);
+        a.download = `好習慣備份_${date}.json`;
+        
+        // 5. 觸發點擊
+        document.body.appendChild(a);
+        a.click();
+        
+        // 6. 清理
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 100);
+
+        alert("✅ 備份指令已發送！\n請檢查瀏覽器的下載清單或檔案管理員。");
+
+    } catch (err) {
+        alert("備份失敗，錯誤訊息: " + err.message);
+    }
+}
+
+function importData() {
+    // 1. 建立一個隱藏的檔案選擇器
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json'; // 限制只能選 JSON 檔
+
+    input.onchange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = readerEvent => {
+            try {
+                // 2. 解析檔案內容
+                const content = JSON.parse(readerEvent.target.result);
+
+                // 3. 基本檢查：確認這是我這支 App 的資料 (檢查是否有必要的欄位)
+                if (content && typeof content.points !== 'undefined') {
+                    // 4. 覆蓋目前的 state
+                    state = content;
                     
-                    punishHtml += `<span style="color:var(--danger)">${task.name}: 違規 ${count} 次 (共扣 ${totalDeduction} 分)</span><br>`;
-                    hasPunish = true;
+                    // 5. 存入手機記憶體
+                    save();
+                    
+                    alert("✅ 資料還原成功！");
+                    
+                    // 6. 關鍵：重新載入頁面，讓所有清單跟積分重新渲染
+                    location.reload();
                 } else {
-                    // 獎勵任務：顯示進度與星星（滿目標次數給一顆星）
-                    const rewardTimes = Math.floor(count / task.target);
-                    const stars = rewardTimes > 0 ? ' ★'.repeat(rewardTimes) : '';
-                    rewardHtml += `${task.name}: ${count}/${task.target}${stars}<br>`;
-                    hasReward = true;
+                    alert("❌ 失敗：此檔案似乎不是正確的備份格式。");
                 }
+            } catch (err) {
+                alert("❌ 解析失敗：檔案內容格式錯誤。\n" + err.message);
             }
-        });
+        };
 
-        if (hasReward) html += rewardHtml + "<br>";
-        if (hasPunish) html += punishHtml + "<br>";
-    } else {
-        html += "<p style='color:#999'>當日無任務活動</p>";
+        // 讀取檔案內容
+        reader.readAsText(file);
+    };
+
+    // 觸發點擊，開啟手機或電腦的檔案選擇視窗
+    input.click();
+}
+
+// --- 修復：清除資料功能 ---
+function clearAllData() {
+    // 1. 安全確認
+    if (confirm("⚠️ 警告：這將永久刪除所有任務、積分與道具記錄，確定要執行嗎？")) {
+        
+        // 2. 清除手機記憶體中特定的資料夾
+        localStorage.removeItem('taskMasterV7');
+        
+        // 3. (選填) 清除目前瀏覽器正在執行的變數 state，恢復到初始值
+        state = { points: 0, tasks: [], items: [], inventory: {}, dailyLogs: {} };
+        
+        // 4. 關鍵：重新載入網頁，讓畫面歸零
+        alert("✅ 所有資料已清空！");
+        location.reload();
     }
-    
-    // 2. 顯示兌換與使用紀錄
-    html += "<strong>🎒 道具紀錄:</strong><br>";
-    let hasInventoryLog = false;
-    
-    // 顯示兌換紀錄
-    for(let n in log.buy) { 
-        html += `兌換: ${n} x${log.buy[n]}<br>`; 
-        hasInventoryLog = true; 
-    }
-    // 顯示使用紀錄
-    for(let n in log.use) { 
-        html += `使用: ${n} x${log.use[n]}<br>`; 
-        hasInventoryLog = true; 
-    }
-    
-    if(!hasInventoryLog) html += "無道具紀錄";
-    
-    content.innerHTML = html;
 }
 
 
-
-    // --- 資料管理 ---
-    function exportData() {
-        const blob = new Blob([JSON.stringify(state)], {type: "application/json"});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `task_master_backup_${getTodayStr()}.json`;
-        a.click();
-    }
-
-    function importData() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.onchange = e => {
-            const reader = new FileReader();
-            reader.onload = ev => {
-                try {
-                    state = JSON.parse(ev.target.result);
-                    save();
-                    location.reload();
-                } catch(e) { alert("檔案讀取錯誤"); }
-            };
-            reader.readAsText(e.target.files[0]);
-        };
-        input.click();
-    }
-
-    function clearAllData() {
-        if (confirm("確定清除所有資料嗎？")) {
-            localStorage.clear();
-            location.reload();
-        }
-    }
-
-    // 啟動
-    init();
+// 啟動！
+init();
 </script>
+
 </body>
 </html>
 
