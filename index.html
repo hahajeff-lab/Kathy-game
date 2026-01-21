@@ -320,10 +320,12 @@ rt {
     
     <div class="type-toggle" style="display: flex; background: #eee; border-radius: 10px; padding: 4px; margin: 10px 0;">
         <label id="labelReward" class="active" style="flex:1; text-align:center; padding:10px; border-radius:8px; cursor:pointer; font-size:18px; font-weight:bold; background:var(--primary); color:white;">
-            <input type="radio" name="tType" value="reward" checked onclick="updateToggleStyle()" style="display:none"> 獎勵
+            <input type="radio" name="tType" value="reward" checked onchange="updateToggleStyle()" ,
+style="position:absolute; opacity:0;"> 獎勵
         </label>
         <label id="labelPunish" style="flex:1; text-align:center; padding:10px; border-radius:8px; cursor:pointer; font-size:18px; font-weight:bold; color:#333;">
-            <input type="radio" name="tType" value="punish" onclick="updateToggleStyle()" style="display:none"> 懲罰
+            <input type="radio" name="tType" value="punish" onchange="updateToggleStyle()" 
+style="position:absolute; opacity:0;"> 懲罰
         </label>
     </div>
 
@@ -519,9 +521,9 @@ function addSettingTask() {
         const points = parseInt(document.getElementById('taskPoints').value);
         const zy = document.getElementById('tZy').value.trim();
         
-        // 更保險的抓取方式
-        const realCheckbox = document.getElementById('tIsPunish');
-        const isPunish = realCheckbox ? realCheckbox.checked : false;
+        // 任務形式
+     const typeEl = document.querySelector('input[name="tType"]:checked');
+        const isPunish = typeEl ? (typeEl.value === 'punish') : false;
 
         if (name && !isNaN(count) && !isNaN(points)) {
             state.tasks.push({ 
@@ -553,6 +555,26 @@ function addSettingTask() {
     }
 }
 
+function updateToggleStyle() {
+    const isPunish = document.querySelector('input[name="tType"][value="punish"]').checked;
+    
+    const labelReward = document.getElementById('labelReward');
+    const labelPunish = document.getElementById('labelPunish');
+
+    if (isPunish) {
+        // 切換到懲罰樣式
+        labelPunish.style.background = 'var(--danger)'; // 懲罰用紅色
+        labelPunish.style.color = 'white';
+        labelReward.style.background = 'transparent';
+        labelReward.style.color = '#333';
+    } else {
+        // 切換到獎勵樣式
+        labelReward.style.background = 'var(--primary)'; // 獎勵用藍色
+        labelReward.style.color = 'white';
+        labelPunish.style.background = 'transparent';
+        labelPunish.style.color = '#333';
+    }
+}
 
 function renderTasks() {
     const list = document.getElementById('taskList');
